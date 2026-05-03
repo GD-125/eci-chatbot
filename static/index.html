@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https:; font-src 'self'; connect-src 'self' http://localhost:* ws://localhost:*"/>
+  <title>ECI Assistant | Election Commission of India</title>
+  <meta name="description" content="Official AI Assistant for Election Commission of India — voter registration, EPIC card, polling booth, election schedules and more."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --saffron:    #FF6B00;
+      --saffron-d:  #E05A00;
+      --saffron-l:  #FFF3E8;
+      --navy:       #1A237E;
+      --navy-d:     #0D1257;
+      --navy-l:     #E8EAF6;
+      --green:      #1B5E20;
+      --green-l:    #E8F5E9;
+      --green-v:    #2E7D32;
+      --white:      #ffffff;
+      --bg:         #F4F6FB;
+      --surface:    #ffffff;
+      --border:     #E0E5F2;
+      --text:       #1A202C;
+      --muted:      #64748B;
+      --radius:     20px;
+      --shadow:     0 8px 40px rgba(26,35,126,.13);
+      --shadow-sm:  0 2px 12px rgba(26,35,126,.09);
+    }
+
+    body {
+      font-family: 'Inter', 'Noto Sans Tamil', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0D1257 0%, #1A237E 40%, #1B5E20 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    /* ── LANGUAGE SCREEN ── */
+    #lang-screen {
+      width: 100%;
+      max-width: 500px;
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      animation: fadeUp .4s cubic-bezier(.16,1,.3,1);
+    }
+
+    .ls-header {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--saffron) 100%);
+      padding: 36px 28px 28px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .ls-header::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .ls-emblem { font-size: 60px; margin-bottom: 12px; filter: drop-shadow(0 4px 12px rgba(0,0,0,.3)); }
+    .ls-header h1 { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 4px; position: relative; }
+    .ls-header p  { font-size: 13px; color: rgba(255,255,255,.85); position: relative; }
+
+    .tricolor-bar { height: 5px; background: linear-gradient(to right, #FF6B00 33.33%, #fff 33.33% 66.66%, #1B5E20 66.66%); }
+
+    .ls-body { padding: 28px 24px 24px; }
+    .ls-body h2 {
+      font-size: 13px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .8px;
+      margin-bottom: 18px; text-align: center;
+    }
+
+    .lang-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+
+    .lang-card {
+      border: 2px solid var(--border);
+      border-radius: 16px; padding: 22px 14px;
+      cursor: pointer; text-align: center;
+      background: var(--bg);
+      transition: all .2s cubic-bezier(.16,1,.3,1);
+      position: relative; overflow: hidden;
+    }
+    .lang-card::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--navy-l), transparent);
+      opacity: 0; transition: opacity .2s;
+    }
+    .lang-card:hover { border-color: var(--navy); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(26,35,126,.18); }
+    .lang-card:hover::after { opacity: 1; }
+    .lang-card.active { border-color: var(--saffron); background: var(--saffron-l); }
+    .lc-flag { font-size: 38px; margin-bottom: 10px; }
+    .lc-name { font-size: 16px; font-weight: 700; color: var(--navy); }
+    .lc-sub  { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    .lang-more-btn {
+      width: 100%; border: 2px dashed var(--border);
+      border-radius: 14px; padding: 13px;
+      cursor: pointer; text-align: center;
+      font-size: 14px; font-weight: 600; color: var(--muted);
+      background: transparent; font-family: inherit;
+      transition: all .2s;
+    }
+    .lang-more-btn:hover { border-color: var(--navy); color: var(--navy); }
+
+    #more-langs { display: none; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .cs-card {
+      flex: 1 1 calc(50% - 10px);
+      border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 12px 10px; text-align: center;
+      background: var(--bg); position: relative; opacity: .75;
+    }
+    .cs-card .lc-flag { font-size: 26px; margin-bottom: 5px; }
+    .cs-card .lc-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .cs-badge {
+      position: absolute; top: 7px; right: 7px;
+      background: var(--saffron); color: #fff;
+      font-size: 9px; font-weight: 700; padding: 2px 7px;
+      border-radius: 8px; letter-spacing: .3px;
+      animation: blink 1.8s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+    /* ── APP ── */
+    #app {
+      display: none;
+      width: 100%; max-width: 860px;
+      height: 95vh; max-height: 920px;
+      background: var(--white);
+      border-radius: var(--radius);
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      animation: fadeUp .3s cubic-bezier(.16,1,.3,1);
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+    /* Header */
+    #hdr {
+      background: linear-gradient(90deg, var(--navy-d), var(--navy));
+      color: #fff; padding: 0 18px;
+      display: flex; align-items: center; gap: 12px;
+      flex-shrink: 0; min-height: 64px;
+      position: relative; overflow: hidden;
+    }
+    #hdr::after {
+      content: ''; position: absolute; right: 0; top: 0; bottom: 0;
+      width: 160px; background: linear-gradient(to left, rgba(255,107,0,.25), transparent);
+    }
+    .hico {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: rgba(255,255,255,.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; border: 2px solid rgba(255,255,255,.25);
+      flex-shrink: 0;
+    }
+    .hname { font-size: 15px; font-weight: 700; }
+    .hstatus { font-size: 11px; opacity: .8; display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+    .hpulse { width: 7px; height: 7px; border-radius: 50%; background: #69F0AE; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+    #lang-badge {
+      margin-left: auto; position: relative; z-index: 1;
+      background: rgba(255,255,255,.15); font-size: 12px; font-weight: 700;
+      padding: 6px 14px; border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.3); cursor: pointer;
+      transition: background .15s;
+    }
+    #lang-badge:hover { background: rgba(255,255,255,.3); }
+
+    .hdr-tribar { height: 4px; background: linear-gradient(to right, #FF6B00 33.33%, #fff 33.33% 66.66%, #1B5E20 66.66%); flex-shrink: 0; }
+
+    /* Chat area */
+    #chat {
+      flex: 1; overflow-y: auto;
+      padding: 18px 16px; display: flex;
+      flex-direction: column; gap: 14px;
+      background: var(--bg);
+    }
+    #chat::-webkit-scrollbar { width: 5px; }
+    #chat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .row { display: flex; align-items: flex-end; gap: 10px; animation: fadeUp .22s ease; }
+    .row.user { flex-direction: row-reverse; }
+
+    .av {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--navy); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .row.user .av { background: var(--saffron); }
+
+    .bub {
+      max-width: 78%; padding: 12px 16px;
+      border-radius: 20px; font-size: 13.5px;
+      line-height: 1.72; word-break: break-word;
+    }
+    .row.bot .bub {
+      background: var(--white); border: 1px solid var(--border);
+      color: var(--text); border-bottom-left-radius: 5px;
+      box-shadow: var(--shadow-sm);
+    }
+    .row.user .bub {
+      background: linear-gradient(135deg, var(--navy), var(--navy-d));
+      color: #fff; border-bottom-right-radius: 5px;
+      box-shadow: 0 4px 16px rgba(26,35,126,.25);
+    }
+
+    .bub h4 { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+    .bub p  { margin-bottom: 5px; }
+    .bub p:last-child { margin-bottom: 0; }
+    .bub strong { font-weight: 700; color: var(--navy); }
+
+    .step-row {
+      display: flex; gap: 10px; padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .step-row:last-of-type { border-bottom: none; }
+    .step-num {
+      min-width: 26px; height: 26px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--navy), var(--saffron));
+      color: #fff; font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .step-txt { font-size: 13px; color: var(--text); flex: 1; line-height: 1.65; }
+
+    .bul-list { list-style: none; padding: 0; }
+    .bul-list li {
+      font-size: 13px; color: var(--text);
+      padding: 3px 0 3px 16px; position: relative; line-height: 1.6;
+    }
+    .bul-list li::before { content: "▸"; position: absolute; left: 0; color: var(--saffron); font-size: 12px; }
+
+    .sec-hdr { font-size: 12px; font-weight: 700; color: var(--navy); margin: 10px 0 5px; display: flex; align-items: center; gap: 5px; }
+
+    .meta-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+    .meta-lbl { font-size: 11px; color: var(--muted); }
+    .conf-track { width: 72px; height: 6px; background: var(--border); border-radius: 3px; display: inline-block; position: relative; overflow: hidden; }
+    .conf-fill  { position: absolute; top:0;left:0;height:100%;border-radius:3px; transition: width .6s ease; }
+    .conf-pct   { font-size: 11px; font-weight: 700; }
+    .tag-pill   { background: var(--navy-l); color: var(--navy); font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+
+    .links-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
+    .clink {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 12px; font-weight: 600; padding: 7px 14px;
+      border-radius: 18px; cursor: pointer; text-decoration: none;
+      border: 1.5px solid var(--navy); color: var(--navy);
+      background: transparent; transition: all .2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+    .clink:hover { 
+      background: var(--navy-l);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(26,35,126,.15);
+    }
+    .clink:active { transform: translateY(0); }
+    .clink.dl { background: var(--navy); color: #fff; border-color: var(--navy); }
+    .clink.dl:hover { background: var(--navy-d); border-color: var(--navy-d); }
+    .clink.ph { border-color: var(--green-v); color: var(--green-v); }
+    .clink.ph:hover { background: var(--green-l); border-color: var(--green-v); }
+    
+    /* Language tier labels */
+    .cs-tier { 
+      width: 100%; text-align: left; padding: 14px 16px 8px;
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .6px;
+      border-top: 1px solid var(--border); margin-top: 12px;
+    }
+
+    /* Typing */
+    #typing { display: none; align-items: flex-end; gap: 10px; }
+    .typ-bub {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 20px; border-bottom-left-radius: 5px;
+      padding: 14px 18px; display: flex; gap: 5px; align-items: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .typ-bub span { width: 8px; height: 8px; border-radius: 50%; background: var(--saffron); animation: tb 1.3s infinite; }
+    .typ-bub span:nth-child(2){ animation-delay:.18s }
+    .typ-bub span:nth-child(3){ animation-delay:.36s }
+    @keyframes tb { 0%,60%,100%{transform:translateY(0);opacity:.6} 30%{transform:translateY(-6px);opacity:1} }
+
+    /* Quick replies */
+    #subzone {
+      display: none; flex-wrap: wrap; gap: 7px;
+      padding: 10px 16px; background: var(--white);
+      border-top: 1px solid var(--border);
+    }
+    .sub-lbl { width: 100%; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 2px; }
+    .sbtn {
+      background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: 20px; padding: 7px 14px;
+      font-size: 12.5px; font-weight: 500; color: var(--navy);
+      cursor: pointer; font-family: inherit;
+      transition: all .15s;
+    }
+    .sbtn:hover { background: var(--navy-l); border-color: var(--navy); transform: translateY(-1px); }
+
+    /* Main buttons bar */
+    #btnbar { background: var(--white); border-top: 1px solid var(--border); padding: 10px 16px 12px; flex-shrink: 0; }
+    .bar-lbl { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 7px; }
+    .mbtn {
+      border: 1.5px solid var(--border); border-radius: 20px;
+      padding: 7px 14px; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; font-family: inherit; background: var(--surface);
+      color: var(--text); transition: all .15s;
+    }
+    .mbtn:hover { background: var(--bg); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .mbtn.pri { background: linear-gradient(135deg, var(--navy), #283593); color: #fff; border-color: var(--navy); }
+    .mbtn.pri:hover { background: linear-gradient(135deg, var(--navy-d), var(--navy)); }
+    .mbtn.acc { background: linear-gradient(135deg, var(--saffron), var(--saffron-d)); color: #fff; border-color: var(--saffron); }
+    .mbtn.acc:hover { background: linear-gradient(135deg, var(--saffron-d), #c94e00); }
+    .mbtn.grn { background: linear-gradient(135deg, var(--green-v), var(--green)); color: #fff; border-color: var(--green-v); }
+    .mbtn.grn:hover { background: linear-gradient(135deg, var(--green), #1a4d1a); }
+
+    /* Input */
+    #irow {
+      display: flex; gap: 10px; align-items: flex-end;
+      padding: 10px 16px; background: var(--white);
+      border-top: 1px solid var(--border); flex-shrink: 0;
+    }
+    #inp-wrap { flex: 1; position: relative; }
+    #inp {
+      width: 100%; border: 2px solid var(--border);
+      border-radius: 24px; padding: 11px 42px 11px 18px;
+      font-size: 13.5px; font-family: inherit;
+      resize: none; outline: none;
+      min-height: 48px; max-height: 130px; line-height: 1.5;
+      color: var(--text); background: var(--bg);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    #inp:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(26,35,126,.1); }
+    #inp.invalid { border-color: #C62828; }
+    #inp::placeholder { color: var(--muted); }
+    #inp-err { font-size: 11px; color: #C62828; margin-top: 4px; padding-left: 16px; display: none; }
+
+    #sendbtn {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--navy), var(--saffron));
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all .2s;
+      box-shadow: 0 4px 14px rgba(26,35,126,.3);
+    }
+    #sendbtn:hover { transform: scale(1.07); box-shadow: 0 6px 20px rgba(26,35,126,.4); }
+    #sendbtn:active { transform: scale(.95); }
+    #sendbtn:disabled { background: var(--border); box-shadow: none; cursor: not-allowed; }
+    #sendbtn svg { width: 20px; height: 20px; fill: #fff; }
+
+    #footer {
+      text-align: center; font-size: 11px; color: var(--muted);
+      padding: 5px 0 9px; background: var(--white);
+      border-top: 1px solid var(--border);
+    }
+
+    /* Welcome card */
+    .welcome-card {
+      background: linear-gradient(135deg, var(--navy-l), var(--saffron-l));
+      border: 1px solid var(--border); border-radius: 18px;
+      padding: 18px 20px; margin-bottom: 4px;
+    }
+    .welcome-card h4 { color: var(--navy); font-size: 15px; font-weight: 800; margin-bottom: 7px; }
+    .welcome-card p  { color: var(--text); font-size: 13px; line-height: 1.6; margin-bottom: 4px; }
+
+    /* Toast notification */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px);
+      background: var(--navy); color: #fff; padding: 10px 20px;
+      border-radius: 30px; font-size: 13px; font-weight: 600;
+      box-shadow: 0 4px 24px rgba(0,0,0,.3); z-index: 9999;
+      transition: transform .3s cubic-bezier(.16,1,.3,1);
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    @media(max-width:540px){
+      body { padding: 0; }
+      #app { border-radius: 0; height: 100dvh; max-height: 100dvh; }
+      #lang-screen { border-radius: 0; min-height: 100dvh; }
+      .bub { max-width: 90%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ LANGUAGE SCREEN ══ -->
+<div id="lang-screen">
+  <div class="ls-header">
+    <div class="ls-emblem">🗳️</div>
+    <h1>Election Commission of India</h1>
+    <p>AI Assistant · தேர்தல் உதவியாளர் · Official ECI Services</p>
+  </div>
+  <div class="tricolor-bar"></div>
+  <div class="ls-body">
+    <h2>Select Language / மொழியை தேர்ந்தெடுக்கவும்</h2>
+    <div class="lang-grid">
+      <div class="lang-card" onclick="selectLang('en')" id="card-en" role="button" tabindex="0" aria-label="English">
+        <div class="lc-flag">🇬🇧</div>
+        <div class="lc-name">English</div>
+        <div class="lc-sub">Continue in English</div>
+      </div>
+      <div class="lang-card" onclick="selectLang('ta')" id="card-ta" role="button" tabindex="0" aria-label="Tamil">
+        <div class="lc-flag">🇮🇳</div>
+        <div class="lc-name">தமிழ்</div>
+        <div class="lc-sub">தமிழில் தொடரவும்</div>
+      </div>
+    </div>
+    <button class="lang-more-btn" onclick="toggleMoreLangs()" id="more-btn">
+      🌐 All Indian Languages (22) / அனைத்து இந்திய மொழிகள் (22)
+    </button>
+    <div id="more-langs">
+      <!-- Tier 1: Fully Supported -->
+      <div class="cs-tier"><strong>✅ Fully Supported</strong></div>
+      <div class="lang-card" onclick="selectLang('en')" id="card-en-more" role="button" tabindex="0" aria-label="English">
+        <div class="lc-flag">🇬🇧</div>
+        <div class="lc-name">English</div>
+        <div class="lc-sub">Active</div>
+      </div>
+      <div class="lang-card" onclick="selectLang('ta')" id="card-ta-more" role="button" tabindex="0" aria-label="Tamil">
+        <div class="lc-flag">🇮🇳</div>
+        <div class="lc-name">தமிழ்</div>
+        <div class="lc-sub">Active</div>
+      </div>
+      
+      <!-- Tier 2: Coming Soon (Major Languages) -->
+      <div class="cs-tier"><strong>🚀 Coming Soon</strong></div>
+      <div class="cs-card" onclick="selectLang('hi')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">हिन्दी / Hindi</div><span class="cs-badge">Q3 2026</span></div>
+      <div class="cs-card" onclick="selectLang('bn')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">బంగ్లా / Bengali</div><span class="cs-badge">Q3 2026</span></div>
+      <div class="cs-card" onclick="selectLang('te')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">తెలుగు / Telugu</div><span class="cs-badge">Q3 2026</span></div>
+      <div class="cs-card" onclick="selectLang('kn')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">ಕನ್ನಡ / Kannada</div><span class="cs-badge">Q3 2026</span></div>
+      <div class="cs-card" onclick="selectLang('ml')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">മലയാളം / Malayalam</div><span class="cs-badge">Q3 2026</span></div>
+      <div class="cs-card" onclick="selectLang('mr')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">मराठी / Marathi</div><span class="cs-badge">Q3 2026</span></div>
+      <div class="cs-card" onclick="selectLang('gu')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">ગુજરાતી / Gujarati</div><span class="cs-badge">Q3 2026</span></div>
+      <div class="cs-card" onclick="selectLang('pa')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">ਪੰਜਾਬੀ / Punjabi</div><span class="cs-badge">Q3 2026</span></div>
+      
+      <!-- Tier 3: Planned -->
+      <div class="cs-tier"><strong>📅 Planned</strong></div>
+      <div class="cs-card" onclick="selectLang('as')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">অসমীয়া / Assamese</div><span class="cs-badge">Q4 2026</span></div>
+      <div class="cs-card" onclick="selectLang('or')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">ওড়িয়া / Odia</div><span class="cs-badge">Q4 2026</span></div>
+      <div class="cs-card" onclick="selectLang('sa')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">संस्कृत / Sanskrit</div><span class="cs-badge">2027</span></div>
+      <div class="cs-card" onclick="selectLang('mai')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">मैथिली / Maithili</div><span class="cs-badge">2027</span></div>
+      <div class="cs-card" onclick="selectLang('kok')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">कोंकणी / Konkani</div><span class="cs-badge">2027</span></div>
+      <div class="cs-card" onclick="selectLang('doi')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">डोगरी / Dogri</div><span class="cs-badge">2027</span></div>
+      <div class="cs-card" onclick="selectLang('sd')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">सिंधी / Sindhi</div><span class="cs-badge">2027</span></div>
+      <div class="cs-card" onclick="selectLang('brx')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">बोडो / Bodo</div><span class="cs-badge">2027</span></div>
+      <div class="cs-card" onclick="selectLang('mni')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">मणिपुरी / Manipuri</div><span class="cs-badge">2027</span></div>
+      <div class="cs-card" onclick="selectLang('ne')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">নেপালী / Nepali</div><span class="cs-badge">2027</span></div>
+      <div class="cs-card" onclick="selectLang('ks')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">ಕಾಶ್ಮೀರಿ / Kashmiri</div><span class="cs-badge">2027</span></div>
+      <div class="cs-card" onclick="selectLang('sat')" role="button" tabindex="0"><div class="lc-flag">🇮🇳</div><div class="lc-name">ᱥᱟᱱᱛᱟᱞᱤ / Santali</div><span class="cs-badge">2027</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CHAT APP ══ -->
+<div id="app">
+  <div id="hdr">
+    <div class="hico">🗳️</div>
+    <div>
+      <div class="hname" id="hdr-name">ECI Assistant</div>
+      <div class="hstatus"><div class="hpulse"></div><span id="hdr-status">AI Model · Online</span></div>
+    </div>
+    <div id="lang-badge" onclick="switchLang()" title="Switch language" role="button">🇬🇧 EN</div>
+  </div>
+  <div class="hdr-tribar"></div>
+
+  <div id="chat" role="log" aria-live="polite"></div>
+  <div id="typing">
+    <div class="av">🗳️</div>
+    <div class="typ-bub"><span></span><span></span><span></span></div>
+  </div>
+
+  <div id="subzone"></div>
+
+  <div id="btnbar">
+    <div class="bar-lbl" id="bar-lbl">Quick Topics</div>
+    <div class="btn-row" id="mainbtns">
+      <button class="mbtn pri" onclick="topicBtn('register')"  id="btn-register">📝 Register to Vote</button>
+      <button class="mbtn pri" onclick="topicBtn('epic')"      id="btn-epic">🪪 Voter ID / EPIC</button>
+      <button class="mbtn pri" onclick="topicBtn('booth')"     id="btn-booth">📍 Polling Booth</button>
+      <button class="mbtn acc" onclick="topicBtn('eci')"       id="btn-eci">🏛️ About ECI</button>
+      <button class="mbtn grn" onclick="topicBtn('helpline')"  id="btn-helpline">📞 Helpline</button>
+      <button class="mbtn"     onclick="topicBtn('law')"       id="btn-law">⚖️ Law</button>
+      <button class="mbtn"     onclick="topicBtn('more')"      id="btn-more">➕ More</button>
+    </div>
+  </div>
+
+  <div id="irow">
+    <div id="inp-wrap">
+      <textarea id="inp" rows="1" placeholder="Ask about voter registration, EPIC card, polling booth…"></textarea>
+      <div id="inp-err"></div>
+    </div>
+    <button id="sendbtn" disabled aria-label="Send message">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+  <div id="footer">🇮🇳 Powered by ECI AI · Sentence Transformers + FAISS · Helpline: 1950</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ═══ STATE ═══ */
+let LANG       = 'en';
+let SESSION_ID = 'sess_' + Math.random().toString(36).slice(2, 9);
+let busy       = false;
+let lawPage    = 0; // For law pagination
+
+const chatEl  = document.getElementById('chat');
+const typingEl= document.getElementById('typing');
+const subzone  = document.getElementById('subzone');
+const inpEl   = document.getElementById('inp');
+const inpErr  = document.getElementById('inp-err');
+const sendBtn = document.getElementById('sendbtn');
+
+/* ─── UI Text per Language ─── */
+const UI = {
+  en: {
+    hdrName:    'ECI Assistant | Election Commission of India',
+    hdrStatus:  'AI Model · Online',
+    badge:      '🇬🇧 EN',
+    barLbl:     'Quick Topics',
+    placeholder:'Ask about voter registration, EPIC, polling booth…',
+    footer:     '🇮🇳 Powered by ECI AI · Helpline: 1950 (Toll-Free)',
+    buttons: {
+      register: '📝 Register to Vote', epic: '🪪 Voter ID / EPIC',
+      booth: '📍 Polling Booth', eci: '🏛️ About ECI',
+      helpline: '📞 Helpline', more: '➕ More', law: '⚖️ Law',
+    },
+    welcome: `<div class="welcome-card">
+      <h4>🇮🇳 Welcome to ECI AI Assistant</h4>
+      <p>I'm your official <strong>Election Commission of India</strong> digital helpdesk. I can help you with:</p>
+      <p>📝 Voter Registration &nbsp;·&nbsp; 🪪 EPIC / Voter ID &nbsp;·&nbsp; 📍 Polling Booth &nbsp;·&nbsp; 🗳️ Election Info</p>
+      <p>Use the quick buttons below or type your question in <strong>English or Tamil</strong>!</p>
+    </div>`,
+    subMore: 'Select a topic',
+    moreItems: [
+      { label: '📝 New Registration (Form 6)',      query: 'How do I register as a voter in India?' },
+      { label: '✏️ Correction (Form 8)',             query: 'How to correct voter ID details using Form 8?' },
+      { label: '🗑️ Delete Entry (Form 7)',           query: 'How to delete or object to a voter entry?' },
+      { label: '🔎 Check Registration Status',       query: 'How to check voter registration status?' },
+      { label: 'Download e-EPIC PDF',             query: 'How to download e-EPIC voter ID card online?' },
+      { label: 'EVM & VVPAT Explained',            query: 'What is EVM and VVPAT?' },
+      { label: 'What is NOTA?',                    query: 'What is NOTA none of the above?' },
+      { label: '❓ Vote Without Voter ID?',           query: 'Can I vote without Voter ID card?' },
+      { label: '📅 Election Schedule',               query: 'What is the election timeline schedule?' },
+      { label: '🏛️ Election Commission of India',   query: 'What is the Election Commission of India?' },
+    ],
+    lawItems: [
+      { label: '📜 Representation of the People Act, 1950', query: 'What is the Representation of the People Act, 1950?' },
+      { label: '📜 Representation of the People Act, 1951', query: 'What is the Representation of the People Act, 1951?' },
+      { label: '📋 Model Code of Conduct (MCC)', query: 'What is the Model Code of Conduct (MCC)?' },
+      { label: '⚖️ Electoral Offences', query: 'What are electoral offences under Indian law?' },
+      { label: '💰 Election Expenditure Limits', query: 'What is the limit on election expenditure in India?' },
+      { label: '📜 Article 324 Constitution', query: 'What is Article 324 of the Indian Constitution?' },
+      { label: '🏛️ ECI Structure & Powers', query: 'What is the structure and powers of the Election Commission of India?' },
+      { label: '🗳️ Conduct of Elections', query: 'How are elections conducted in India?' },
+      { label: '📊 Delimitation of Constituencies', query: 'What is delimitation of constituencies?' },
+      { label: '🛡️ ECI Independence', query: 'Why is the Election Commission of India independent?' },
+      { label: '📞 Voter Helpline & Support', query: 'What voter support services are available?' },
+      { label: '🔍 Election Petitions', query: 'What is an election petition?' },
+    ],
+    topicQueries: {
+      register: 'How do I register as a voter in India?',
+      epic:     'How do I apply for voter ID?',
+      booth:    'How do I find my polling booth?',
+      eci:      'What is the Election Commission of India?',
+      helpline: 'What is the voter helpline number?',
+    },
+  },
+  ta: {
+    hdrName:    'ECI உதவியாளர் | இந்திய தேர்தல் ஆணையம்',
+    hdrStatus:  'AI மாதிரி · இயங்குகிறது',
+    badge:      '🇮🇳 தமிழ்',
+    barLbl:     'விரைவு தலைப்புகள்',
+    placeholder:'வாக்காளர் பதிவு, EPIC அட்டை, வாக்குச்சாவடி பற்றி கேளுங்கள்…',
+    footer:     '🇮🇳 ECI AI மூலம் இயங்குகிறது · உதவி எண்: 1950 (இலவசம்)',
+    buttons: {
+      register: '📝 வாக்காளர் பதிவு', epic: '🪪 வாக்காளர் அட்டை',
+      booth: '📍 வாக்குச்சாவடி', eci: '🏛️ ECI பற்றி',
+      helpline: '📞 உதவி எண்', more: '➕ மேலும்', law: '⚖️ சட்டம்',
+    },
+    welcome: `<div class="welcome-card">
+      <h4>🇮🇳 Election Commission of India – AI Assistant</h4>
+      <p>Welcome! I am your official <strong>Election Commission of India</strong> digital helpdesk, here to assist you with all your electoral needs.</p>
+      <p>📝 Voter Registration &nbsp;·&nbsp; 🪪 EPIC / Voter ID Services &nbsp;·&nbsp; 📍 Polling Booth Details &nbsp;·&nbsp; 🗳️ Election Information</p>
+      <p>Use the quick buttons below or type your query in <strong>English or Tamil</strong>.</p>
+    </div>`,
+    subMore: 'தலைப்பை தேர்ந்தெடுக்கவும்',
+    moreItems: [
+      { label: '📝 புதிய பதிவு (படிவம் 6)',           query: 'வாக்காளராக பதிவு செய்வது எப்படி?' },
+      { label: '✏️ திருத்தம் (படிவம் 8)',               query: 'வாக்காளர் அட்டை விவரங்களை திருத்துவது எப்படி?' },
+      { label: '🗑️ நீக்கம் (படிவம் 7)',                query: 'வாக்காளர் பட்டியலில் இருந்து நீக்குவது எப்படி?' },
+      { label: '🔎 பதிவு நிலை சரிபார்',               query: 'வாக்காளர் பதிவு நிலையை எப்படி சரிபார்ப்பது?' },
+      { label: '⬇️ e-EPIC பதிவிறக்கம்',               query: 'e-EPIC வாக்காளர் அட்டையை ஆன்லைனில் பதிவிறக்குவது எப்படி?' },
+      { label: '📍 வாக்குச்சாவடி கண்டறி',             query: 'என் வாக்குச்சாவடியை எவ்வாறு கண்டுபிடிப்பது?' },
+      { label: 'EVM மற்றும் VVPAT விளக்கம்',             query: 'EVM மற்றும் VVPAT பற்றி விளக்கவும்' },
+      { label: '❓ அட்டை இல்லாமல் வாக்களிக்கலாமா?',  query: 'வாக்காளர் அடையாள அட்டை இல்லாமல் வாக்களிக்க முடியுமா?' },
+      { label: '📅 தேர்தல் அட்டவணை',                  query: 'தேர்தல் காலவரிசை அட்டவணை என்ன?' },
+      { label: '🏛️ இந்திய தேர்தல் ஆணையம்',           query: 'இந்திய தேர்தல் ஆணையம் என்றால் என்ன?' },
+    ],
+    lawItems: [
+      { label: '📜 மக்கள் பிரதிநிதித்துவ சட்டம், 1950', query: 'இந்திய மக்கள் பிரதிநிதித்துவ சட்டம், 1950 என்றால் என்ன?' },
+      { label: '📜 மக்கள் பிரதிநிதித்துவ சட்டம், 1951', query: 'இந்திய மக்கள் பிரதிநிதித்துவ சட்டம், 1951 என்றால் என்ன?' },
+      { label: '📋 மாடல் நடத்தை விதிமுறைகள் (MCC)', query: 'மாடல் நடத்தை விதிமுறைகள் (MCC) என்றால் என்ன?' },
+      { label: '⚖️ தேர்தல் குற்றங்கள்', query: 'இந்திய சட்டத்தின் கீழ் தேர்தல் குற்றங்கள் என்ன?' },
+      { label: '💰 தேர்தல் செலவு வரம்புகள்', query: 'இந்தியாவில் தேர்தல் செலவு வரம்பு என்ன?' },
+      { label: '📜 அரசியல் சாசனத்தின் 324வது பிரிவு', query: 'இந்திய அரசியல் சாசனத்தின் 324வது பிரிவு என்றால் என்ன?' },
+      { label: '🏛️ ECI அமைப்பு மற்றும் அதிகாரங்கள்', query: 'இந்திய தேர்தல் ஆணையத்தின் அமைப்பு மற்றும் அதிகாரங்கள் என்ன?' },
+      { label: '🗳️ தேர்தல்களை நடத்துதல்', query: 'இந்தியாவில் தேர்தல்கள் எவ்வாறு நடத்தப்படுகின்றன?' },
+      { label: '📊 தொகுதிகளின் எல்லை நிர்ணயம்', query: 'தொகுதிகளின் எல்லை நிர்ணயம் என்றால் என்ன?' },
+      { label: '🛡️ ECI சுதந்திரம்', query: 'இந்திய தேர்தல் ஆணையம் ஏன் சுதந்திரமானது?' },
+      { label: '📞 வாக்காளர் உதவி மற்றும் ஆதரவு', query: 'என்ன வாக்காளர் ஆதரவு சேவைகள் கிடைக்கின்றன?' },
+      { label: '🔍 தேர்தல் மனுக்கள்', query: 'தேர்தல் மனு என்றால் என்ன?' },
+    ],
+    topicQueries: {
+      register: 'வாக்காளராக பதிவு செய்வது எப்படி?',
+      epic:     'வாக்காளர் அட்டை EPIC எப்படி விண்ணப்பிப்பது?',
+      booth:    'என் வாக்குச்சாவடியை எவ்வாறு கண்டுபிடிப்பது?',
+      eci:      'இந்திய தேர்தல் ஆணையம் என்றால் என்ன?',
+      helpline: 'வாக்காளர் உதவி எண் என்ன?',
+    },
+  },
+};
+
+/* ── Language selection ── */
+function toggleMoreLangs(){
+  const el  = document.getElementById('more-langs');
+  const btn = document.getElementById('more-btn');
+  const open = el.style.display === 'flex';
+  el.style.display = open ? 'none' : 'flex';
+  btn.textContent = open ? '🌐 All Indian Languages (22) / அனைத்து இந்திய மொழிகள் (22)' : '▲ Hide / மறை';
+}
+
+function selectLang(lang){
+  const SUPPORTED = ['en', 'ta'];
+  if(!SUPPORTED.includes(lang)){
+    const comingSoonMsg = `🚀 ${lang.toUpperCase()} support coming soon!\n\nPlease stay tuned for updates. For now, use English or Tamil.`;
+    showToast(comingSoonMsg);
+    return;
+  }
+  LANG = lang;
+  document.getElementById('card-en').classList.toggle('active', lang === 'en');
+  document.getElementById('card-ta').classList.toggle('active', lang === 'ta');
+  document.getElementById('card-en-more')?.classList.toggle('active', lang === 'en');
+  document.getElementById('card-ta-more')?.classList.toggle('active', lang === 'ta');
+  setTimeout(() => launchChat(), 220);
+}
+
+function launchChat(){
+  document.getElementById('lang-screen').style.display = 'none';
+  const appEl = document.getElementById('app');
+  appEl.style.display = 'flex';
+  applyLang();
+  showWelcome();
+  inpEl.focus();
+}
+
+function applyLang(){
+  const u = UI[LANG];
+  document.getElementById('hdr-name').textContent    = u.hdrName;
+  document.getElementById('hdr-status').textContent  = u.hdrStatus;
+  document.getElementById('lang-badge').textContent  = u.badge;
+  document.getElementById('bar-lbl').textContent     = u.barLbl;
+  document.getElementById('footer').textContent      = u.footer;
+  inpEl.placeholder = u.placeholder;
+  const b = u.buttons;
+  document.getElementById('btn-register').textContent = b.register;
+  document.getElementById('btn-epic').textContent     = b.epic;
+  document.getElementById('btn-booth').textContent    = b.booth;
+  document.getElementById('btn-eci').textContent      = b.eci;
+  document.getElementById('btn-helpline').textContent = b.helpline;
+  document.getElementById('btn-law').textContent      = b.law;
+  document.getElementById('btn-more').textContent     = b.more;
+}
+
+function switchLang(){
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('lang-screen').style.display = '';
+  chatEl.innerHTML = '';
+  closeSubzone();
+}
+
+/* ── Input validation ── */
+const ALLOWED_RE  = /^[\w\s\u0B80-\u0BFF?.@,$]*$/u;
+const BLOCKED_STR = ['<script','javascript:','onerror=','onclick=','drop table','select *','--','ignore previous'];
+
+function validateInput(val){
+  const v = val.trim();
+  if(v.length < 2)    return LANG==='ta' ? 'குறைந்தது 2 எழுத்துகள் தேவை.' : 'Too short — type at least 2 characters.';
+  if(v.length > 500)  return LANG==='ta' ? 'அதிகபட்சம் 500 எழுத்துகள்.' : 'Too long — max 500 characters.';
+  if(!ALLOWED_RE.test(v)) return LANG==='ta' ? 'சிறப்பு எழுத்துக்கள் அனுமதிக்கப்படவில்லை.' : 'Only letters, numbers, spaces and ? , . @ $ are allowed.';
+  for(const p of BLOCKED_STR) if(v.toLowerCase().includes(p)) return 'Message contains disallowed content.';
+  return null;
+}
+
+inpEl.addEventListener('input', () => {
+  const err = validateInput(inpEl.value);
+  inpEl.classList.toggle('invalid', !!err);
+  if(!err) clearInputErr();
+  sendBtn.disabled = (!!err || inpEl.value.trim().length < 2 || busy);
+  inpEl.style.height = 'auto';
+  inpEl.style.height = Math.min(inpEl.scrollHeight, 130) + 'px';
+});
+
+inpEl.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); if(!sendBtn.disabled) sendMessage(inpEl.value.trim()); }
+});
+sendBtn.addEventListener('click', () => sendMessage(inpEl.value.trim()));
+
+function showInputErr(msg){ inpErr.textContent = msg; inpErr.style.display = 'block'; setTimeout(clearInputErr, 2800); }
+function clearInputErr(){ inpErr.textContent = ''; inpErr.style.display = 'none'; }
+
+/* ── Chat helpers ── */
+function scrollBot(){ chatEl.scrollTop = chatEl.scrollHeight; }
+function showTyping(){ typingEl.style.display = 'flex'; chatEl.appendChild(typingEl); scrollBot(); }
+function hideTyping(){ typingEl.style.display = 'none'; }
+
+function addUser(text){
+  const row = document.createElement('div');
+  row.className = 'row user';
+  row.innerHTML = `<div class="bub">${esc(text)}</div><div class="av">👤</div>`;
+  chatEl.appendChild(row); scrollBot();
+}
+
+function addBot(htmlContent, conf, tags, links){
+  const row = document.createElement('div');
+  row.className = 'row bot';
+  let meta = '';
+  if(conf !== null && conf !== undefined && conf > 0){
+    const pct   = Math.round(conf * 100);
+    const color = pct >= 70 ? '#2E7D32' : pct >= 50 ? '#E65100' : '#C62828';
+    const tagHtml = (tags||[]).map(t => `<span class="tag-pill">${esc(t)}</span>`).join('');
+    const lbl = LANG === 'ta' ? 'நம்பகத்தன்மை:' : 'Confidence:';
+    meta = `<div class="meta-row">
+      <span class="meta-lbl">${lbl}</span>
+      <span class="conf-track"><span class="conf-fill" style="width:${pct}%;background:${color}"></span></span>
+      <span class="conf-pct" style="color:${color}">${pct}%</span>${tagHtml}
+    </div>`;
+  }
+  let linksHtml = '';
+  if(links && links.length > 0){
+    const items = links.map(lk => {
+      const cls  = lk.type === 'download' ? 'dl' : lk.type === 'phone' ? 'ph' : '';
+      const icon = lk.type === 'download' ? '⬇️' : lk.type === 'phone' ? '📞' : '🔗';
+      return `<a class="clink ${cls}" href="${lk.url}" target="${lk.type==='phone'?'_self':'_blank'}" rel="noopener">${icon} ${esc(lk.label)}</a>`;
+    }).join('');
+    linksHtml = `<div class="links-row">${items}</div>`;
+  }
+  row.innerHTML = `<div class="av">🗳️</div><div class="bub">${htmlContent}${linksHtml}${meta}</div>`;
+  chatEl.appendChild(row); scrollBot();
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function linkify(text){
+  return text
+    .replace(/(https?:\/\/[^\s]+)/g, '<a class="clink" href="$1" target="_blank" rel="noopener">$1</a>')
+    .replace(/\b(www\.[^\s<]+)\b/g, '<a class="clink" href="https://$1" target="_blank" rel="noopener">$1</a>')
+    .replace(/\b([\w.-]+\.(?:gov\.in|gov|com|org|net|in))\b/g, '<a class="clink" href="https://$1" target="_blank" rel="noopener">$1</a>');
+}
+
+function formatAnswer(text){
+  if(!text) return '';
+  const lines = text.split('\n');
+  let html = '', inSteps = false;
+  lines.forEach(line => {
+    const t = line.trim();
+    if(!t){ if(!inSteps) html += '<br>'; return; }
+    const sm = t.match(/^(?:Step\s+)?(\d+)[.:]\s+(.+)$/i);
+    if(sm){
+      if(!inSteps) inSteps = true;
+      const stepText = esc(sm[2]).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+      html += `<div class="step-row"><div class="step-num">${esc(sm[1])}</div><div class="step-txt">${linkify(stepText)}</div></div>`;
+      return;
+    }
+    if(inSteps) inSteps = false;
+    if(/^[A-Z\u0B80-\u0BFF][A-Z\s\u0B80-\u0BFF\-&\/()+:]{4,}:$/.test(t)){
+      html += `<div class="sec-hdr">📌 ${linkify(esc(t.replace(/:$/,'')))}</div>`; return;
+    }
+    if(t.startsWith('-') || t.startsWith('•') || t.startsWith('▸') || t.startsWith('·')){
+      const bulletText = esc(t.replace(/^[-•▸·]\s*/,'')).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+      html += `<ul class="bul-list"><li>${linkify(bulletText)}</li></ul>`; return;
+    }
+    const paragraphText = esc(t).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+    html += `<p>${linkify(paragraphText)}</p>`;
+  });
+  return html;
+}
+
+/* ── API Call ── */
+async function callAPI(message, useHistory = true){
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({message, lang: LANG, session_id: SESSION_ID, use_history: useHistory}),
+  });
+  if(!res.ok){ const err = await res.json().catch(()=>({})); throw new Error(err.detail || `HTTP ${res.status}`); }
+  return res.json();
+}
+
+async function sendQuery(displayText, query, useHistory = false){
+  if(!query || busy) return;
+  busy = true;
+  inpEl.value = ''; inpEl.style.height = 'auto';
+  sendBtn.disabled = true; clearInputErr(); closeSubzone();
+  addUser(displayText);
+  showTyping();
+  try {
+    const data = await callAPI(query, useHistory);
+    hideTyping();
+    addBot(formatAnswer(data.answer), data.confidence, data.tags, data.links);
+    if (data.confidence === 0.0) {
+      showToast(LANG === 'ta' ? "உங்கள் கேள்வி மேலே உள்ள பொத்தான்களால் மறைக்கப்படவில்லை என்றால், உங்கள் சொந்த தனிப்பயன் கேள்வியை தட்டச்சு செய்ய தயங்க வேண்டாம்!" : "If your question isn't covered by the buttons above, feel free to type your own custom question!");
+    }
+  } catch(e){
+    hideTyping();
+    const errMsg = LANG === 'ta'
+      ? `⚠️ பிழை: ${esc(e.message)}. மீண்டும் முயற்சிக்கவும் அல்லது 1950 அழைக்கவும்.`
+      : `⚠️ Error: ${esc(e.message)}. Please try again or call Helpline 1950.`;
+    addBot(`<p style="color:#C62828">${errMsg}</p>`, null, [], []);
+  }
+  busy = false; inpEl.focus();
+}
+
+async function sendMessage(msg){
+  const err = validateInput(msg);
+  if(err){ showInputErr(err); return; }
+  if(!msg || busy) return;
+  await sendQuery(msg, msg, true);
+}
+
+/* ── Sub-buttons ── */
+function closeSubzone(){ subzone.style.display = 'none'; subzone.innerHTML = ''; lawPage = 0; }
+
+function showSub(labelText, items, isLaw = false){
+  subzone.innerHTML = `<div class="sub-lbl">${esc(labelText)}</div>`;
+  const pageSize = 6;
+  const start = isLaw ? lawPage * pageSize : 0;
+  const end = start + pageSize;
+  const pageItems = items.slice(start, end);
+  
+  pageItems.forEach(it => {
+    const btn = document.createElement('button');
+    btn.className = 'sbtn';
+    btn.textContent = it.label;
+    btn.onclick = () => {
+      closeSubzone();
+      lawPage = 0; // Reset pagination
+      sendQuery(it.label, it.query);
+    };
+    subzone.appendChild(btn);
+  });
+  
+  if (isLaw && end < items.length) {
+    const loadMoreBtn = document.createElement('button');
+    loadMoreBtn.className = 'sbtn';
+    loadMoreBtn.textContent = LANG === 'ta' ? '➕ மேலும் ஏற்று' : '➕ Load More';
+    loadMoreBtn.onclick = () => {
+      lawPage++;
+      showSub(labelText, items, true);
+    };
+    subzone.appendChild(loadMoreBtn);
+  }
+  
+  subzone.style.display = 'flex';
+}
+
+/* ── Topic buttons ── */
+function topicBtn(key){
+  closeSubzone();
+  const u = UI[LANG];
+  if(key === 'more'){
+    addUser(LANG === 'ta' ? `நீங்கள் கேட்டது: ${u.buttons[key]}` : `You asked: ${u.buttons[key]}`);
+    setTimeout(() => {
+      const intro = LANG==='ta'
+        ? '<h4>➕ மேலும் தலைப்புகள்</h4><p>ஒரு தலைப்பை தேர்ந்தெடுக்கவும்:</p>'
+        : '<h4>➕ More Topics</h4><p>Select a topic to get detailed information:</p>';
+      addBot(intro, null, [], []);
+      showSub(u.subMore, u.moreItems);
+    }, 350); return;
+  }
+  if(key === 'law'){
+    lawPage = 0; // Reset pagination
+    addUser(LANG === 'ta' ? `நீங்கள் கேட்டது: ${u.buttons[key]}` : `You asked: ${u.buttons[key]}`);
+    setTimeout(() => {
+      const intro = LANG==='ta'
+        ? '<h4>⚖️ தேர்தல் சட்டங்கள்</h4><p>ஒரு சட்ட தலைப்பை தேர்ந்தெடுக்கவும்:</p>'
+        : '<h4>⚖️ Election Laws</h4><p>Select a law topic to get detailed information:</p>';
+      addBot(intro, null, [], []);
+      showSub(LANG === 'ta' ? 'சட்ட தலைப்பை தேர்ந்தெடுக்கவும்' : 'Select Law Topic', u.lawItems, true);
+    }, 350); return;
+  }
+  const displayText = LANG === 'ta' ? `நீங்கள் கேட்டது: ${u.buttons[key]}` : `You asked: ${u.buttons[key]}`;
+  addUser(displayText);
+  sendQuery(u.buttons[key], u.topicQueries[key], false);
+}
+
+/* ── Welcome ── */
+function showWelcome(){
+  const row = document.createElement('div');
+  row.className = 'row bot';
+  row.innerHTML = `<div class="av">🗳️</div><div class="bub">${UI[LANG].welcome}</div>`;
+  chatEl.appendChild(row);
+}
+
+/* ── Toast ── */
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+
+/* ── Keyboard navigation for lang cards ── */
+document.querySelectorAll('.lang-card').forEach(card => {
+  card.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') card.click(); });
+});
+</script>
+</body>
+</html>
